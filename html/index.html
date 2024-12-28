@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bicep Curl Counter</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+
+      body {
+        background: #f5f5f5;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+
+      .workout-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        position: relative;
+      }
+
+      .counter {
+        position: absolute;
+        top: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+      }
+
+      .counter-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #2196f3;
+        text-align: center;
+      }
+
+      .counter-label {
+        font-size: 1rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 0.5rem;
+      }
+
+      canvas {
+        display: block;
+        margin: 0 auto;
+        border-radius: 15px;
+      }
+
+      .stats {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+        display: flex;
+        gap: 2rem;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .stat-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2196f3;
+        margin-top: 0.2rem;
+      }
+
+      .exercise-selector {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+      }
+
+      .exercise-selector select {
+        padding: 0.5rem;
+        border-radius: 8px;
+        border: 2px solid #2196f3;
+        font-size: 1rem;
+        background: white;
+        cursor: pointer;
+      }
+
+      .exercise-info {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+        color: #666;
+        max-width: 200px;
+      }
+
+      .demo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+
+      .demo-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 600px;
+        display: flex;
+        gap: 2rem;
+      }
+
+      .demo-text {
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .demo-text h3 {
+        color: #2196f3;
+        margin-bottom: 1rem;
+      }
+
+      .demo-button {
+        background: #2196f3;
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .demo-button:hover {
+        background: #1976d2;
+      }
+
+      #demo-canvas {
+        border-radius: 10px;
+        background: #f5f5f5;
+      }
+
+      .score-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+      }
+
+      .score-content {
+        background: white;
+        padding: 3rem;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 500px;
+      }
+
+      .score-content h2 {
+        color: #2196f3;
+        margin-bottom: 2rem;
+        font-size: 2rem;
+      }
+
+      .score-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .score-item {
+        text-align: center;
+      }
+
+      .score-label {
+        font-size: 0.9rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+      }
+
+      .score-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2196f3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="workout-container">
+        <div class="demo-overlay" id="demo-overlay">
+          <div class="demo-content">
+            <canvas id="demo-canvas" width="300" height="300"></canvas>
+            <div class="demo-text">
+              <h3>Exercise Demo</h3>
+              <p id="demo-instruction"></p>
+              <button id="start-exercise" class="demo-button">
+                Start Exercise
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="score-overlay" id="score-overlay" style="display: none">
+          <div class="score-content">
+            <h2>Exercise Complete! 🎉</h2>
+            <div class="score-stats">
+              <div class="score-item">
+                <div class="score-label">Perfect Reps</div>
+                <div class="score-value" id="perfect-reps">0</div>
+              </div>
+              <div class="score-item">
+                <div class="score-label">Form Mistakes</div>
+                <div class="score-value" id="form-mistakes">0</div>
+              </div>
+              <div class="score-item">
+                <div class="score-label">Accuracy</div>
+                <div class="score-value" id="accuracy">0%</div>
+              </div>
+            </div>
+            <button id="restart-exercise" class="demo-button">Try Again</button>
+          </div>
+        </div>
+        <div class="exercise-selector">
+          <select id="exercise-select" title="a">
+            <option value="bicepCurl">Bicep Curls</option>
+            <option value="lateralRaise">Lateral Raises</option>
+            <option value="lunges">Lunges</option>
+          </select>
+        </div>
+        <div class="exercise-info" id="exercise-info">
+          Select an exercise to begin
+        </div>
+        <div class="counter">
+          <div class="counter-label">Repetitions</div>
+          <div class="counter-number" id="counter">0</div>
+        </div>
+        <div class="stats">
+          <div class="stat-item">
+            <div class="stat-label">Stage</div>
+            <div class="stat-value" id="stage-display">Down</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Angle</div>
+            <div class="stat-value" id="angle-display">0°</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script>
+      let counter = 0;
+      let stage = "down";
+      let poses = null;
+      let capture;
+      let wrongFormTimer = 0;
+      let successTimer = 0;
+      let lastWrongFormTime = 0;
+      let currentExercise = "bicepCurl";
+      const WRONG_FORM_COOLDOWN = 180;
+      let isDemoMode = true;
+      let demoAngle = 0;
+      let demoCanvas;
+      let demoCtx;
+      let correctSound;
+      let wrongSound;
+      let currentEmoji = "";
+      let emojiTimer = 0;
+      let audioContext;
+      let correctBuffer;
+      let wrongBuffer;
+      let formMistakes = 0;
+      let perfectReps = 0;
+      const REPS_TO_COMPLETE = 3;
+
+      // DOM elements
+      const counterElement = document.getElementById("counter");
+      const stageDisplay = document.getElementById("stage-display");
+      const angleDisplay = document.getElementById("angle-display");
+      const exerciseSelect = document.getElementById("exercise-select");
+      const exerciseInfo = document.getElementById("exercise-info");
+      const demoOverlay = document.getElementById("demo-overlay");
+      const startExerciseBtn = document.getElementById("start-exercise");
+      const demoInstruction = document.getElementById("demo-instruction");
+      const scoreOverlay = document.getElementById("score-overlay");
+      const perfectRepsElement = document.getElementById("perfect-reps");
+      const formMistakesElement = document.getElementById("form-mistakes");
+      const accuracyElement = document.getElementById("accuracy");
+      const restartButton = document.getElementById("restart-exercise");
+
+      if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {};
+      }
+
+      navigator.mediaDevices.getUserMedia = async (constraints) => {
+        return new Promise((resolve, reject) => {
+          window.ReactNativeWebView.postMessage(
+            JSON.stringify({
+              type: "requestCamera",
+              constraints: constraints,
+            })
+          );
+
+          // Create a video stream that will be replaced with the actual camera feed
+          const video = document.createElement("video");
+          const canvas = document.createElement("canvas");
+          const stream = canvas.captureStream();
+
+          // Add a track to the stream
+          const track = stream.getVideoTracks()[0];
+
+          resolve(stream);
+        });
+      };
+
+      // Setup MediaPipe Pose
+      const pose = new Pose({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        },
+      });
+
+      pose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      // Process pose detection results
+      pose.onResults((results) => {
+        poses = results;
+      });
+
+      // p5.js setup
+      function setup() {
+        createCanvas(640, 480);
+
+        // Setup webcam
+        capture = createCapture(VIDEO);
+        capture.size(640, 480);
+        capture.hide();
+
+        // Setup camera after webcam is ready
+        const camera = new Camera(capture.elt, {
+          onFrame: async () => {
+            await pose.send({ image: capture.elt });
+          },
+          width: 640,
+          height: 480,
+        });
+        camera.start();
+
+        // Setup demo canvas
+        demoCanvas = document.getElementById("demo-canvas");
+        demoCtx = demoCanvas.getContext("2d");
+
+        // Start demo animation
+        showExerciseDemo(currentExercise);
+      }
+
+      async function initAudio() {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+          const [correctResponse, wrongResponse] = await Promise.all([
+            fetch("517755__danlucaz__game-fx-1.wav"),
+            fetch("242503__gabrielaraujo__failurewrong-action.wav"),
+          ]);
+
+          const [correctArrayBuffer, wrongArrayBuffer] = await Promise.all([
+            correctResponse.arrayBuffer(),
+            wrongResponse.arrayBuffer(),
+          ]);
+
+          correctBuffer = await audioContext.decodeAudioData(
+            correctArrayBuffer
+          );
+          wrongBuffer = await audioContext.decodeAudioData(wrongArrayBuffer);
+        } catch (error) {
+          console.error("Error loading sounds:", error);
+        }
+      }
+
+      function playSound(buffer, volume = 0.3) {
+        if (!audioContext || !buffer) return;
+
+        const source = audioContext.createBufferSource();
+        const gainNode = audioContext.createGain();
+
+        source.buffer = buffer;
+        gainNode.gain.value = volume;
+
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        source.start();
+      }
+
+      // Exercise configurations
+      const exercises = {
+        bicepCurl: {
+          name: "Bicep Curl",
+          info: "Curl your arm up to your shoulder, keeping your upper arm still",
+          checkForm: (landmarks) => {
+            const shoulder = landmarks[12];
+            const elbow = landmarks[14];
+            const wrist = landmarks[16];
+            const angle = calculateAngle(shoulder, elbow, wrist);
+
+            return {
+              angle,
+              isTopPosition: angle < 45,
+              isBottomPosition: angle > 160,
+              wrongForm: stage === "down" && angle < 160 && angle > 45,
+            };
+          },
+        },
+        lateralRaise: {
+          name: "Lateral Raise",
+          info: "Raise your arms out to the sides until they're parallel with the ground",
+          checkForm: (landmarks) => {
+            const shoulder = landmarks[12];
+            const elbow = landmarks[14];
+            const hip = landmarks[24];
+            const angle = calculateAngle(hip, shoulder, elbow);
+
+            return {
+              angle,
+              isTopPosition: angle > 85 && angle < 95,
+              isBottomPosition: angle < 20,
+              wrongForm: stage === "up" && angle > 20 && angle < 85,
+            };
+          },
+        },
+        lunges: {
+          name: "Lunges",
+          info: "Step forward and lower your body until both knees are bent at 90 degrees",
+          checkForm: (landmarks) => {
+            const hip = landmarks[24];
+            const knee = landmarks[26];
+            const ankle = landmarks[28];
+            const angle = calculateAngle(hip, knee, ankle);
+
+            return {
+              angle,
+              isTopPosition: angle > 160,
+              isBottomPosition: angle < 95 && angle > 85,
+              wrongForm: stage === "down" && angle > 95 && angle < 160,
+            };
+          },
+        },
+      };
+
+      // Exercise selection handler
+      exerciseSelect.addEventListener("change", (e) => {
+        currentExercise = e.target.value;
+        resetExercise();
+        exerciseInfo.textContent = exercises[currentExercise].info;
+        showExerciseDemo(currentExercise);
+      });
+
+      // Set initial exercise info
+      exerciseInfo.textContent = exercises[currentExercise].info;
+
+      function draw() {
+        background(0);
+
+        push();
+        translate(width, 0);
+        scale(-1, 1);
+
+        if (capture) {
+          image(capture, 0, 0, width, height);
+        }
+
+        if (poses && poses.poseLandmarks) {
+          drawSkeleton();
+
+          const exercise = exercises[currentExercise];
+          const form = exercise.checkForm(poses.poseLandmarks);
+
+          angleDisplay.textContent = `${form.angle.toFixed(0)}°`;
+
+          const currentTime = frameCount;
+          if (
+            form.wrongForm &&
+            currentTime - lastWrongFormTime > WRONG_FORM_COOLDOWN
+          ) {
+            wrongFormTimer = 30;
+            lastWrongFormTime = currentTime;
+          }
+
+          if (form.isBottomPosition && stage === "up") {
+            stage = "down";
+            stageDisplay.textContent = "Down";
+          }
+          if (form.isTopPosition && stage === "down") {
+            stage = "up";
+            stageDisplay.textContent = "Up";
+            counter++;
+            counterElement.textContent = counter;
+            successTimer = 30;
+          }
+        }
+        pop();
+
+        // Draw feedback overlays
+        drawFeedbackOverlays();
+      }
+
+      function drawFeedbackOverlays() {
+        if (wrongFormTimer > 0) {
+          push();
+          fill(255, 0, 0, 100);
+          noStroke();
+          rect(0, 0, width, height);
+
+          textSize(72);
+          textAlign(CENTER, CENTER);
+          text("😫", width / 2, height / 2);
+
+          if (wrongFormTimer === 30) {
+            formMistakes++;
+            playSound(wrongBuffer, 0.2);
+          }
+
+          wrongFormTimer--;
+          pop();
+        }
+
+        if (successTimer > 0) {
+          push();
+          fill(0, 255, 0, 100);
+          noStroke();
+          rect(0, 0, width, height);
+
+          const successEmojis = ["💪", "🎯", "⭐", "🔥"];
+          const emojiIndex = Math.floor(counter % successEmojis.length);
+
+          textSize(72);
+          textAlign(CENTER, CENTER);
+          text(successEmojis[emojiIndex], width / 2, height / 2);
+
+          if (successTimer === 30) {
+            perfectReps++;
+            playSound(correctBuffer, 0.3);
+          }
+
+          successTimer--;
+          pop();
+        }
+
+        if (counter >= REPS_TO_COMPLETE) {
+          showScoreScreen();
+        }
+      }
+
+      function drawSkeleton() {
+        stroke(33, 150, 243, 200);
+        strokeWeight(3);
+
+        connectPoints(12, 14);
+        connectPoints(14, 16);
+
+        connectPoints(11, 13);
+        connectPoints(13, 15);
+
+        connectPoints(11, 12);
+        connectPoints(11, 23);
+        connectPoints(12, 24);
+        connectPoints(23, 24);
+
+        connectPoints(23, 25);
+        connectPoints(25, 27);
+        connectPoints(24, 26);
+        connectPoints(26, 28);
+
+        for (let landmark of poses.poseLandmarks) {
+          const x = landmark.x * width;
+          const y = landmark.y * height;
+          fill(33, 150, 243, 200);
+          noStroke();
+          circle(x, y, 6);
+        }
+      }
+
+      function connectPoints(i1, i2) {
+        const p1 = poses.poseLandmarks[i1];
+        const p2 = poses.poseLandmarks[i2];
+        line(p1.x * width, p1.y * height, p2.x * width, p2.y * height);
+      }
+
+      function calculateAngle(a, b, c) {
+        let radians =
+          Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+        let angle = Math.abs((radians * 180.0) / Math.PI);
+
+        if (angle > 180.0) {
+          angle = 360 - angle;
+        }
+
+        return angle;
+      }
+
+      function showExerciseDemo(exerciseType) {
+        isDemoMode = true;
+        demoOverlay.style.display = "flex";
+        demoInstruction.textContent = exercises[exerciseType].info;
+        animateDemo();
+      }
+
+      function animateDemo() {
+        if (!isDemoMode) return;
+
+        // Clear demo canvas
+        demoCtx.clearRect(0, 0, demoCanvas.width, demoCanvas.height);
+
+        // Draw stick figure based on current exercise
+        const centerX = demoCanvas.width / 2;
+        const centerY = demoCanvas.height / 2;
+
+        demoCtx.strokeStyle = "#2196f3";
+        demoCtx.lineWidth = 3;
+
+        switch (currentExercise) {
+          case "bicepCurl":
+            drawBicepCurlDemo(centerX, centerY);
+            break;
+          case "lateralRaise":
+            drawLateralRaiseDemo(centerX, centerY);
+            break;
+          case "lunges":
+            drawLungesDemo(centerX, centerY);
+            break;
+        }
+
+        demoAngle += 0.05;
+        requestAnimationFrame(animateDemo);
+      }
+
+      function drawBicepCurlDemo(x, y) {
+        const armAngle = (Math.sin(demoAngle) + 1) * 75; // Range 0-150 degrees
+
+        // Draw body
+        demoCtx.beginPath();
+        demoCtx.moveTo(x, y - 40);
+        demoCtx.lineTo(x, y + 40);
+        demoCtx.stroke();
+
+        // Draw arm
+        const elbowX = x + Math.cos(Math.PI / 2) * 30;
+        const elbowY = y + Math.sin(Math.PI / 2) * 30;
+
+        const handX =
+          elbowX + Math.cos(Math.PI / 2 - (armAngle * Math.PI) / 180) * 40;
+        const handY = elbowY - Math.sin((armAngle * Math.PI) / 180) * 40;
+
+        demoCtx.beginPath();
+        demoCtx.moveTo(x, y);
+        demoCtx.lineTo(elbowX, elbowY);
+        demoCtx.lineTo(handX, handY);
+        demoCtx.stroke();
+      }
+
+      function drawLateralRaiseDemo(x, y) {
+        const armAngle = (Math.sin(demoAngle) + 1) * 45; // Range 0-90 degrees
+
+        // Draw body
+        demoCtx.beginPath();
+        demoCtx.moveTo(x, y - 40);
+        demoCtx.lineTo(x, y + 40);
+        demoCtx.stroke();
+
+        // Draw arms
+        const shoulderY = y - 30;
+
+        // Left arm
+        const leftHandX = x - Math.cos((armAngle * Math.PI) / 180) * 60;
+        const leftHandY = shoulderY - Math.sin((armAngle * Math.PI) / 180) * 60;
+
+        // Right arm
+        const rightHandX = x + Math.cos((armAngle * Math.PI) / 180) * 60;
+        const rightHandY =
+          shoulderY - Math.sin((armAngle * Math.PI) / 180) * 60;
+
+        demoCtx.beginPath();
+        demoCtx.moveTo(x - 10, shoulderY);
+        demoCtx.lineTo(leftHandX, leftHandY);
+        demoCtx.moveTo(x + 10, shoulderY);
+        demoCtx.lineTo(rightHandX, rightHandY);
+        demoCtx.stroke();
+      }
+
+      function drawLungesDemo(x, y) {
+        const legAngle = (Math.sin(demoAngle) + 1) * 45; // Range 0-90 degrees
+
+        // Draw upper body
+        demoCtx.beginPath();
+        demoCtx.moveTo(x, y - 60);
+        demoCtx.lineTo(x, y);
+        demoCtx.stroke();
+
+        // Draw legs
+        const hipY = y;
+        const kneeX = x + Math.cos((legAngle * Math.PI) / 180) * 40;
+        const kneeY = hipY + Math.sin((legAngle * Math.PI) / 180) * 40;
+        const footX = kneeX + 20;
+        const footY = kneeY + 30;
+
+        // Back leg
+        demoCtx.beginPath();
+        demoCtx.moveTo(x, hipY);
+        demoCtx.lineTo(x - 20, hipY + 60);
+        demoCtx.stroke();
+
+        // Front leg
+        demoCtx.beginPath();
+        demoCtx.moveTo(x, hipY);
+        demoCtx.lineTo(kneeX, kneeY);
+        demoCtx.lineTo(footX, footY);
+        demoCtx.stroke();
+      }
+
+      startExerciseBtn.addEventListener("click", async () => {
+        isDemoMode = false;
+        demoOverlay.style.display = "none";
+        await initAudio(); // Initialize audio after user interaction
+      });
+
+      function showScoreScreen() {
+        scoreOverlay.style.display = "flex";
+        perfectRepsElement.textContent = perfectReps;
+        formMistakesElement.textContent = formMistakes;
+        const accuracy = Math.round((perfectReps / formMistakes) * 10);
+        accuracyElement.textContent = `${accuracy}%`;
+      }
+
+      function resetExercise() {
+        counter = 0;
+        formMistakes = 0;
+        perfectReps = 0;
+        stage = "down";
+        counterElement.textContent = "0";
+        scoreOverlay.style.display = "none";
+      }
+
+      restartButton.addEventListener("click", () => {
+        resetExercise();
+      });
+    </script>
+  </body>
+</html>
