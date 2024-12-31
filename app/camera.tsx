@@ -57,9 +57,23 @@ export default function CameraScreen() {
   return (
     <View style={styles.container}>
       <WebView
-        source={trackingHtml}
-        onMessage={handleWebViewMessage}
-        javaScriptEnabled={true}
+     userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
+     source={{ uri: 'https://www.uxtreasure.de/iteraktionsdesign/SmartGymBroWebAppPrototype/index.html' }}
+     style={{
+       marginTop: 20,
+       borderWidth: 1,
+       borderColor: 'red',
+       width: 400,
+       height: 400,
+     }}
+     originWhitelist={['*']}
+     allowsInlineMediaPlayback
+     javaScriptEnabled
+     scalesPageToFit
+     mediaPlaybackRequiresUserAction={false}
+     startInLoadingState
+     javaScriptEnabledAndroid
+     useWebkit
       />
     </View>
   );

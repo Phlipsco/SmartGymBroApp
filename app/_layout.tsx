@@ -22,7 +22,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="camera" 
           options={{
-            headerTitle: "Exercise Camera",
+            headerTitle: "Exercise Cameraa",
             headerBackTitle: "Back"
           }}
         />
