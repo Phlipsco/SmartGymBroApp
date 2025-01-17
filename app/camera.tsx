@@ -1,88 +1,155 @@
-import { useRef, useState } from "react";
-import { StyleSheet, View, Text } from "react-native";
-import * as React from "react";
+// CameraScreen.tsx
+import { useRef, useState, useEffect } from "react";
 import {
-  CameraView,
-  PermissionStatus,
-  useCameraPermissions,
-} from "expo-camera";
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  SafeAreaView,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
+import * as React from "react";
 import { WebView } from "react-native-webview";
+import { Link, useRouter, useLocalSearchParams } from "expo-router";
+import { COLORS, globalStyles } from "./styles/globalStyles";
 
 export default function CameraScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraView>(null);
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const webViewRef = useRef<WebView>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const trackingHtml = require("../html/index.html");
+  // Initialize exercise configuration
+  const exerciseConfig = {
+    sets: parseInt(params.sets as string) || 3,
+    reps: parseInt(params.reps as string) || 12,
+  };
 
-  React.useEffect(() => {
-    requestPermission();
-  }, []);
+  // Inject configuration when WebView loads
+  const injectJavaScript = () => {
+    const config = {
+      type: "exerciseConfig",
+      sets: exerciseConfig.sets,
+      reps: exerciseConfig.reps,
+    };
 
-  if (!permission || permission.status === PermissionStatus.UNDETERMINED) {
-    return (
-      <View style={styles.container}>
-        <Text>Camera permission is required</Text>
-      </View>
-    );
-  }
+    const jsCode = `
+      try {
+        console.log('Injecting config:', ${JSON.stringify(config)});
+        
+        // Create and dispatch a custom event
+        const configEvent = new CustomEvent('exerciseConfig', {
+          detail: ${JSON.stringify(config)}
+        });
+        document.dispatchEvent(configEvent);
+        
+        // Also try postMessage for compatibility
+        window.postMessage(${JSON.stringify(config)}, '*');
+        
+        true;
+      } catch (error) {
+        console.error('Error injecting config:', error);
+      }
+    `;
 
-  if (permission.status === PermissionStatus.DENIED) {
-    return (
-      <View style={styles.container}>
-        <Text>No access to camera</Text>
-      </View>
-    );
-  }
+    setTimeout(() => {
+      webViewRef.current?.injectJavaScript(jsCode);
+    }, 1000); // Delay to ensure WebView is fully loaded
+  };
 
-  //   return (
-  //     <View style={styles.container}>
-  //       <CameraView
-  //         ref={cameraRef}
-  //         style={styles.camera}
-  //         facing="front"
-  //         onMountError={(error) => {
-  //           console.error("Camera mount error:", error);
-  //         }}
-  //       />
-  //     </View>
-  //   );
-  // }
-
+  // Handle messages from WebView
   const handleWebViewMessage = (event: any) => {
-    // Process messages from WebView
-    const data = event.nativeEvent.data;
-    console.log("Message from WebView:", data);
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      console.log("Received message from WebView:", data);
+
+      if (data.type === "exerciseComplete") {
+        router.push({
+          pathname: "/finishedExercise",
+          params: data.stats,
+        });
+      }
+    } catch (error) {
+      console.error("Error handling WebView message:", error);
+    }
+  };
+
+  // WebView performance optimization props
+  const webViewProps = {
+    androidLayerType: Platform.select({
+      android: isLoading ? "none" : "hardware",
+      default: undefined,
+    }) as "none" | "software" | "hardware" | undefined,
+    androidHardwareAccelerationDisabled: Platform.OS === "android" && isLoading,
   };
 
   return (
-    <View style={styles.container}>
-      <WebView
-     userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36"
-     source={{ uri: 'https://www.uxtreasure.de/iteraktionsdesign/SmartGymBroWebAppPrototype/index.html' }}
-     style={{
-       width: 400,
-       height: 400,
-     }}
-     originWhitelist={['*']}
-     allowsInlineMediaPlayback
-     javaScriptEnabled
-     scalesPageToFit
-     mediaPlaybackRequiresUserAction={false}
-     startInLoadingState
-     javaScriptEnabledAndroid
-     useWebkit
-      />
-    </View>
+    <SafeAreaView style={globalStyles.container}>
+      <View style={styles.webviewContainer}>
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>Loading camera...</Text>
+          </View>
+        )}
+        <WebView
+          ref={webViewRef}
+          source={{
+            uri: "https://www.uxtreasure.de/test1/SmartGymBroWebAppPrototype/index.html",
+          }}
+          style={[styles.webview, isLoading && styles.hidden]}
+          originWhitelist={["*"]}
+          allowsInlineMediaPlayback
+          javaScriptEnabled
+          scalesPageToFit
+          mediaPlaybackRequiresUserAction={false}
+          onMessage={handleWebViewMessage}
+          onLoadEnd={() => {
+            setIsLoading(false);
+            injectJavaScript();
+          }}
+          onError={(syntheticEvent) => {
+            console.warn("WebView error: ", syntheticEvent.nativeEvent);
+          }}
+          onHttpError={(syntheticEvent) => {
+            console.warn("WebView HTTP error: ", syntheticEvent.nativeEvent);
+          }}
+          {...webViewProps}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
-  container: {
+  webviewContainer: {
     flex: 1,
+    backgroundColor: COLORS.darkGray,
+    borderRadius: 15,
+    overflow: "hidden",
+    margin: 10,
+  },
+  webview: {
+    flex: 1,
+  },
+  hidden: {
+    opacity: 0,
+  },
+  loadingContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: COLORS.darkGray,
+    zIndex: 1,
   },
-  camera: {
-    flex: 1,
-    width: "100%",
+  loadingText: {
+    color: COLORS.white,
+    marginTop: 10,
+    fontSize: 16,
   },
 });

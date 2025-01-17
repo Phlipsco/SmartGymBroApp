@@ -1,29 +1,43 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import React from "react";
 
 export default function RootLayout() {
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack>
-        <Stack.Screen 
-          name="index" 
+        <Stack.Screen
+          name="index"
           options={{
-            headerShown: false
+            headerShown: false,
           }}
         />
-        <Stack.Screen 
-          name="exercise/[id]" 
+        <Stack.Screen
+          name="exercise/[id]"
           options={{
             headerTitle: "",
-            headerBackTitle: "Back"
+            headerBackTitle: "Back",
+            headerStyle: { backgroundColor: "#1E1E1E" },
+            headerTintColor: "white",
           }}
         />
-        <Stack.Screen 
-          name="camera" 
+        <Stack.Screen
+          name="camera"
           options={{
-            headerTitle: "Exercise Cameraa",
-            headerBackTitle: "Back"
+            headerTitle: "Exercise Camera",
+            headerBackTitle: "Back",
+            headerStyle: { backgroundColor: "#1E1E1E" },
+            headerTintColor: "white",
+          }}
+        />
+        <Stack.Screen
+          name="finishedExercise"
+          options={{
+            headerTitle: "Finished Exercise",
+            headerBackTitle: "Back",
+            headerStyle: { backgroundColor: "#1E1E1E" },
+            headerTintColor: "white",
           }}
         />
       </Stack>
