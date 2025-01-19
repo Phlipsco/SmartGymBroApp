@@ -1,7 +1,14 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+} from "react-native";
+import { useState } from "react";
 import { WebView } from "react-native-webview";
-import { COLORS, globalStyles } from '../styles/globalStyles';
+import { COLORS, globalStyles } from "../styles/globalStyles";
 
 const exercises = {
   "bicep-curls": {
@@ -19,9 +26,28 @@ const exercises = {
 };
 
 export default function ExerciseDetail() {
-  const { id } = useLocalSearchParams();
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const { id, sets, reps } = useLocalSearchParams();
   const exercise = exercises[id as keyof typeof exercises];
+
+  const exerciseConfig = {
+    sets: parseInt(params.sets as string) || 3,
+    reps: parseInt(params.reps as string) || 12,
+  };
+
+  const handleStartExercise = () => {
+    alert(
+      `Starting exercise with: ${exerciseConfig.sets} sets and ${exerciseConfig.reps} reps, this should show only in "dev" mode`
+    );
+    router.push({
+      pathname: "/camera",
+      params: {
+        sets: sets.toString(),
+        reps: reps.toString(),
+      },
+    });
+  };
 
   if (!exercise) {
     return (
@@ -44,18 +70,9 @@ export default function ExerciseDetail() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={globalStyles.primaryButton}
-          onPress={() => router.push("/camera")}
+          onPress={handleStartExercise}
         >
           <Text style={globalStyles.buttonText}>Start Exercising Now</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={globalStyles.secondaryButton}
-          onPress={() => router.push("/camera")}
-        >
-          <Text style={[globalStyles.buttonText, { color: COLORS.primary }]}>
-            Don't Show Again
-          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -70,15 +87,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.darkGray,
     borderRadius: 15,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 20,
   },
   video: {
     flex: 1,
   },
   buttonContainer: {
-    gap: 15,
-    alignItems: 'center',
-    marginBottom: 30,
+    alignItems: "center",
   },
 });

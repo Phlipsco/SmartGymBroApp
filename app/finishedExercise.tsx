@@ -19,7 +19,7 @@ export default function FinishedExercise() {
       <Text style={[globalStyles.body, styles.feedback]}>
         {params.perfectReps / params.totalReps > 0.8
           ? "Excellent form! Keep up the great work!"
-          : "Your form has improved! For better results, try to perform the exercise a bit slower next time."}
+          : "Your form has improved! For better results"}
       </Text>
       <View style={styles.statsContainer}>
         <Text style={[globalStyles.subtitle, styles.statsTitle]}>
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-evenly",
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,

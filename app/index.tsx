@@ -63,11 +63,11 @@ export default function Home() {
     setModalVisible(false);
     setStreak(streak + 1);
     if (selectedExercise) {
-      console.log("Starting exercise with:", { sets, reps }); // Debug log
+      console.log("Starting exercise with:", { sets, reps });
       router.push({
         pathname: "/camera",
         params: {
-          sets: sets.toString(), // Convert to string for URL params
+          sets: sets.toString(),
           reps: reps.toString(),
         },
       });
@@ -77,7 +77,14 @@ export default function Home() {
   const handleShowDemo = () => {
     setModalVisible(false);
     if (selectedExercise) {
-      router.push(`/exercise/${selectedExercise.id}`);
+      router.push({
+        pathname: `/exercise/[id]`,
+        params: {
+          id: selectedExercise.id,
+          sets: sets.toString(),
+          reps: reps.toString(),
+        },
+      });
     }
   };
 
@@ -289,7 +296,7 @@ const styles = StyleSheet.create({
 
   exerciseButton: {
     padding: 28,
-    alignItems: "center", // Center-aligned text
+    alignItems: "center",
     justifyContent: "center",
   },
 
@@ -298,7 +305,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: COLORS.white,
     letterSpacing: 0.5,
-    textAlign: "center", // Ensure text is centered
+    textAlign: "center",
   },
 
   modalOverlay: {
@@ -405,7 +412,7 @@ const styles = StyleSheet.create({
   startButton: {
     flex: 1,
     borderRadius: 20,
-    overflow: "hidden", // This ensures the gradient respects the border radius
+    overflow: "hidden",
   },
 
   startButtonGradient: {

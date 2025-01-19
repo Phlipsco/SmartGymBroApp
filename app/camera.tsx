@@ -118,6 +118,14 @@ export default function CameraScreen() {
           {...webViewProps}
         />
       </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={globalStyles.primaryButton}
+          onPress={() => router.push("/finishedExercise")}
+        >
+          <Text style={globalStyles.buttonText}>Finish Exercise Early</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -151,5 +159,12 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginTop: 10,
     fontSize: 16,
+  },
+  buttonContainer: {
+    position: "fixed",
+    bottom: 0,
+    alignItems: "center",
+    marginTop: 15,
+    marginBottom: 20,
   },
 });
