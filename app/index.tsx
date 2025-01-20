@@ -5,22 +5,28 @@ import { Link, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState, useEffect } from "react";
 import { COLORS, globalStyles } from "./styles/globalStyles";
+import BicepCurl from "@/assets/icons/BicepCurl";
+import LateralRaises from "@/assets/icons/LateralRaises";
+import Lunges from "@/assets/icons/Lunges";
 
 const exercises = [
   {
     id: "bicep-curls",
     title: "Bicep Curls",
     video: "https://www.youtube.com/embed/ykJmrZ5v0Oo",
+    icon: <BicepCurl style={{ width: 30, height: 30 }} />,
   },
   {
     id: "lunges",
     title: "Lunges",
     video: "https://www.youtube.com/embed/QOVaHwm-Q6U",
+    icon: <Lunges style={{ width: 30, height: 30 }} />,
   },
   {
     id: "butterfly",
     title: "Lateral Raises",
     video: "https://www.youtube.com/watch?v=XPPfnSEATJA",
+    icon: <LateralRaises style={{ width: 30, height: 30 }} />,
   },
 ];
 
@@ -132,6 +138,7 @@ export default function Home() {
                 end={{ x: 1, y: 1 }}
                 style={styles.exerciseButton}
               >
+                {/* {exercise.icon} */}
                 <Text
                   style={[globalStyles.buttonText, styles.exerciseButtonText]}
                 >
