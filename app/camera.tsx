@@ -19,6 +19,7 @@ export default function CameraScreen() {
   const params = useLocalSearchParams();
   const webViewRef = useRef<WebView>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // const HTML = require("@/html/index.html");
 
   // Initialize exercise configuration
   const exerciseConfig = {
@@ -96,8 +97,9 @@ export default function CameraScreen() {
         <WebView
           ref={webViewRef}
           source={{
-            uri: "https://www.uxtreasure.de/test1/SmartGymBroWebAppPrototype/index.html",
+            uri: "https://www.uxtreasure.de/test3/SmartGymBroWebAppPrototype/index.html",
           }}
+          // source={HTML}
           style={[styles.webview, isLoading && styles.hidden]}
           originWhitelist={["*"]}
           allowsInlineMediaPlayback

@@ -138,7 +138,7 @@ export default function Home() {
                 end={{ x: 1, y: 1 }}
                 style={styles.exerciseButton}
               >
-                {/* {exercise.icon} */}
+                {exercise.icon}
                 <Text
                   style={[globalStyles.buttonText, styles.exerciseButtonText]}
                 >
