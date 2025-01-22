@@ -36,6 +36,7 @@ const motivationalMessages = [
   "Don't limit your challenges. Challenge your limits!",
   "The body achieves what the mind believes.",
   "Strive for progress, not perfection.",
+  "Every workout is just a step, but together they make the journey.",
 ];
 
 export default function Home() {
@@ -50,6 +51,7 @@ export default function Home() {
   const [reps, setReps] = useState(12);
   const [streak, setStreak] = useState(1);
   const [motivationalMessage, setMotivationalMessage] = useState("");
+  const [showQuickExerciseModal, setShowQuickExerciseModal] = useState(false);
 
   useEffect(() => {
     // Randomize motivational message on screen load
@@ -62,6 +64,7 @@ export default function Home() {
 
   const handleExercisePress = (exercise: any) => {
     setSelectedExercise(exercise);
+    setShowQuickExerciseModal(false);
     setModalVisible(true);
   };
 
@@ -94,6 +97,12 @@ export default function Home() {
     }
   };
 
+  const handleCustomExercise = () => {
+    router.push({
+      pathname: "/customExercise"
+    });
+  };
+
   return (
     <SafeAreaView style={styles.safeAreaViewContainer}>
       <View style={styles.container}>
@@ -124,30 +133,86 @@ export default function Home() {
           <Text style={styles.motivationalMessage}>{motivationalMessage}</Text>
         </View>
 
-        {/* Exercise List */}
+        {/* Main Buttons */}
         <View style={styles.exerciseList}>
-          {exercises.map((exercise) => (
-            <TouchableOpacity
-              key={exercise.id}
-              style={styles.exerciseButtonWrapper}
-              onPress={() => handleExercisePress(exercise)}
+          <TouchableOpacity
+            style={styles.exerciseButtonWrapper}
+            onPress={() => setShowQuickExerciseModal(true)}
+          >
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.exerciseButton}
             >
-              <LinearGradient
-                colors={[COLORS.primary, COLORS.primaryDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.exerciseButton}
-              >
-                {exercise.icon}
-                <Text
-                  style={[globalStyles.buttonText, styles.exerciseButtonText]}
-                >
-                  {exercise.title}
+              <View style={styles.buttonContent}>
+                <Ionicons name="flash-outline" size={30} color={COLORS.white} />
+                <Text style={[globalStyles.buttonText, styles.exerciseButtonText]}>
+                  Quick Exercise
                 </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.exerciseButtonWrapper}
+            onPress={handleCustomExercise}
+          >
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.exerciseButton}
+            >
+              <View style={styles.buttonContent}>
+                <Ionicons name="create-outline" size={30} color={COLORS.white} />
+                <Text style={[globalStyles.buttonText, styles.exerciseButtonText]}>
+                  Custom Exercise
+                </Text>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
+
+        {/* Quick Exercise Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={showQuickExerciseModal}
+          onRequestClose={() => setShowQuickExerciseModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={[globalStyles.title, styles.modalTitle]}>
+                Choose Exercise
+              </Text>
+
+              <View style={styles.quickExerciseList}>
+                {exercises.map((exercise) => (
+                  <TouchableOpacity
+                    key={exercise.id}
+                    style={styles.quickExerciseButton}
+                    onPress={() => handleExercisePress(exercise)}
+                  >
+                    <View style={styles.buttonContent}>
+                      {exercise.icon}
+                      <Text style={[globalStyles.buttonText, styles.exerciseButtonText]}>
+                        {exercise.title}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowQuickExerciseModal(false)}
+              >
+                <Ionicons name="close" size={24} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* Modal */}
         <Modal
@@ -166,7 +231,7 @@ export default function Home() {
               <View style={styles.counterContainer}>
                 <View style={styles.counterSection}>
                   <Text style={[globalStyles.subtitle, styles.counterLabel]}>
-                    Sets
+                    Total Sets
                   </Text>
                   <View style={styles.counterControls}>
                     <TouchableOpacity
@@ -191,7 +256,7 @@ export default function Home() {
 
                 <View style={styles.counterSection}>
                   <Text style={[globalStyles.subtitle, styles.counterLabel]}>
-                    Reps
+                    Total Reps Per Set
                   </Text>
                   <View style={styles.counterControls}>
                     <TouchableOpacity
@@ -469,5 +534,25 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontStyle: "italic",
     letterSpacing: 0.5,
+  },
+
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  quickExerciseList: {
+    width: '100%',
+    gap: 16,
+    paddingHorizontal: 16,
+  },
+
+  quickExerciseButton: {
+    backgroundColor: COLORS.darkGray,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
   },
 });

@@ -65,7 +65,7 @@ export default function CameraScreen() {
       const data = JSON.parse(event.nativeEvent.data);
       console.log("Received message from WebView:", data);
 
-      if (data.type === "exerciseComplete") {
+      if (data.type === "exerciseComplete" || data.type === "earlyCompletion") {
         router.push({
           pathname: "/finishedExercise",
           params: data.stats,
@@ -97,7 +97,7 @@ export default function CameraScreen() {
         <WebView
           ref={webViewRef}
           source={{
-            uri: "https://www.uxtreasure.de/test3/SmartGymBroWebAppPrototype/index.html",
+            uri: "https://www.uxtreasure.de/test2/SmartGymBroWebAppPrototype/index.html",
           }}
           // source={HTML}
           style={[styles.webview, isLoading && styles.hidden]}
@@ -123,7 +123,24 @@ export default function CameraScreen() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={globalStyles.primaryButton}
-          onPress={() => router.push("/finishedExercise")}
+          onPress={() => {
+            const jsCode = `
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: "earlyCompletion",
+          stats: {
+            totalReps: counter,
+            perfectReps: perfectReps,
+            formMistakes: formMistakes,
+            completedSets: currentSet,
+            currentSetReps: repsInCurrentSet
+          }
+        }));
+      }
+      true;
+    `;
+            webViewRef.current?.injectJavaScript(jsCode);
+          }}
         >
           <Text style={globalStyles.buttonText}>Finish Exercise Early</Text>
         </TouchableOpacity>
