@@ -26,7 +26,6 @@ export type CustomWorkout = {
     reps: number;
   }[];
 };
-
 export const STORAGE_KEY = "@custom_workouts";
 
 export default function CustomExercise() {
