@@ -40,10 +40,28 @@ export default function RootLayout() {
             headerTintColor: "white",
           }}
         />
-          <Stack.Screen
+        <Stack.Screen
           name="customExercise"
           options={{
             headerTitle: "Custom Exercise",
+            headerBackTitle: "Back",
+            headerStyle: { backgroundColor: "#1E1E1E" },
+            headerTintColor: "white",
+          }}
+        />
+        <Stack.Screen
+          name="createWorkout"
+          options={{
+            headerTitle: "Create Workout",
+            headerBackTitle: "Back",
+            headerStyle: { backgroundColor: "#1E1E1E" },
+            headerTintColor: "white",
+          }}
+        />
+        <Stack.Screen
+          name="editWorkout"
+          options={{
+            headerTitle: "Edit Workout",
             headerBackTitle: "Back",
             headerStyle: { backgroundColor: "#1E1E1E" },
             headerTintColor: "white",

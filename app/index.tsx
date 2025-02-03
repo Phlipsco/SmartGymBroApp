@@ -8,6 +8,7 @@ import { COLORS, globalStyles } from "./styles/globalStyles";
 import BicepCurl from "@/assets/icons/BicepCurl";
 import LateralRaises from "@/assets/icons/LateralRaises";
 import Lunges from "@/assets/icons/Lunges";
+import QuickExerciseModal from "./components/QuickExerciseModal";
 
 const exercises = [
   {
@@ -99,7 +100,7 @@ export default function Home() {
 
   const handleCustomExercise = () => {
     router.push({
-      pathname: "/customExercise"
+      pathname: "/customExercise",
     });
   };
 
@@ -147,8 +148,10 @@ export default function Home() {
             >
               <View style={styles.buttonContent}>
                 <Ionicons name="flash-outline" size={30} color={COLORS.white} />
-                <Text style={[globalStyles.buttonText, styles.exerciseButtonText]}>
-                  Quick Exercise
+                <Text
+                  style={[globalStyles.buttonText, styles.exerciseButtonText]}
+                >
+                  Quick Exercisee
                 </Text>
               </View>
             </LinearGradient>
@@ -165,8 +168,14 @@ export default function Home() {
               style={styles.exerciseButton}
             >
               <View style={styles.buttonContent}>
-                <Ionicons name="create-outline" size={30} color={COLORS.white} />
-                <Text style={[globalStyles.buttonText, styles.exerciseButtonText]}>
+                <Ionicons
+                  name="create-outline"
+                  size={30}
+                  color={COLORS.white}
+                />
+                <Text
+                  style={[globalStyles.buttonText, styles.exerciseButtonText]}
+                >
                   Custom Exercise
                 </Text>
               </View>
@@ -194,12 +203,24 @@ export default function Home() {
                     style={styles.quickExerciseButton}
                     onPress={() => handleExercisePress(exercise)}
                   >
-                    <View style={styles.buttonContent}>
-                      {exercise.icon}
-                      <Text style={[globalStyles.buttonText, styles.exerciseButtonText]}>
-                        {exercise.title}
-                      </Text>
-                    </View>
+                    <LinearGradient
+                      colors={[COLORS.primary, COLORS.primaryDark]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.exerciseButton}
+                    >
+                      <View style={styles.buttonContent}>
+                        {exercise.icon}
+                        <Text
+                          style={[
+                            globalStyles.buttonText,
+                            styles.exerciseButtonText,
+                          ]}
+                        >
+                          {exercise.title}
+                        </Text>
+                      </View>
+                    </LinearGradient>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -213,10 +234,12 @@ export default function Home() {
             </View>
           </View>
         </Modal>
+        {/* <QuickExerciseModal /> */}
 
+        {/* Total sets and rep modal */}
         {/* Modal */}
         <Modal
-          animationType="slide"
+          animationType="none"
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => setModalVisible(false)}
@@ -395,6 +418,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     elevation: 10,
+    minHeight: 700,
   },
 
   modalTitle: {
@@ -537,22 +561,24 @@ const styles = StyleSheet.create({
   },
 
   buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
+    borderRadius: 8,
   },
 
   quickExerciseList: {
-    width: '100%',
+    width: "100%",
     gap: 16,
     paddingHorizontal: 16,
   },
 
   quickExerciseButton: {
-    backgroundColor: COLORS.darkGray,
-    padding: 20,
+    // backgroundColor: COLORS.darkGray,
+    // padding: 20,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
+    overflow: "hidden",
+    // borderWidth: 2,
+    // borderColor: COLORS.primary,
   },
 });

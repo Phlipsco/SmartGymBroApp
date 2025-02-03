@@ -1,16 +1,16 @@
 import { StyleSheet, Dimensions } from "react-native";
 
 export const COLORS = {
-  primary: "#FF7A47", // Main orange
-  primaryLight: "#FF9666", // Lighter orange for highlights
-  primaryDark: "#E9370B", // Darker orange for buttons
-  dark: "#1A1A1A", // Main background
-  darkGray: "#2D2D2D", // Secondary background
-  lightGray: "#AAAAAA", // Disabled text
+  primary: "#FF7A47",
+  primaryLight: "#FF9666",
+  primaryDark: "#E9370B",
+  dark: "#1A1A1A",
+  darkGray: "#2D2D2D",
+  lightGray: "#AAAAAA",
   white: "#FFFFFF",
   error: "#FF5555",
   success: "#66D9A3",
-  overlay: "rgba(0,0,0,0.7)", // For modals/overlays
+  overlay: "rgba(0,0,0,0.7)",
 };
 
 const { width } = Dimensions.get("window");
@@ -21,7 +21,7 @@ export const globalStyles = StyleSheet.create({
     backgroundColor: COLORS.dark,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
     color: COLORS.white,
     marginBottom: 15,
@@ -37,13 +37,11 @@ export const globalStyles = StyleSheet.create({
     color: COLORS.white,
   },
   primaryButton: {
-    backgroundColor: COLORS.primary,
     paddingVertical: 15,
     paddingHorizontal: 30,
-    borderRadius: 25,
+
     width: width * 0.9,
     alignItems: "center",
-
     elevation: 5,
   },
   secondaryButton: {

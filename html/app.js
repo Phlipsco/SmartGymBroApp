@@ -1,144 +1,189 @@
+// State variables
 let poses = null;
 let capture;
 let counter = 0;
 let wrongFormTimer = 0;
 let lastWrongFormTime = 0;
 let wrongFormCooldownTimer = 0;
-const WRONG_FORM_COOLDOWN = 200;
 let formMistakes = 0;
 let perfectReps = 0;
-
+let lastPerfectReps = 0;
 let totalReps = 0;
 let currentSet = 1;
+let repsInCurrentSet = 0;
+let isTrackingEnabled = true;
 
+// Exercise thresholds and constants
+const WRONG_FORM_COOLDOWN = 1000;
 const DOWN_ANGLE_THRESHOLD = 130;
 const UP_ANGLE_THRESHOLD = 70;
-// Animation system for feedback
-let successAnimations = [];
-
-// Form tracking
-let consecutiveFormMistakes = 0;
 const CONSECUTIVE_MISTAKE_THRESHOLD = 3;
+const MISTAKE_RESET_TIME = 3000;
+const MIN_REP_DURATION = 600;
+const START_ANGLE_MIN = 15;
+const START_ANGLE_MAX = 80;
+const END_ANGLE_MIN = 115;
+const END_ANGLE_MAX = 165;
+const ANGLE_THRESHOLD = 8;
+const ALIGNMENT_THRESHOLD = 50;
+const SIDE_VIEW_SHOULDER_THRESHOLD = 0.15;
+const RED_OVERLAY_DURATION = 500;
+const ERROR_MESSAGE_DURATION = 3000;
+const SUCCESS_ANIMATION_DURATION = 2000;
+const MIN_ANGLE_CHANGE_FOR_REP = 80;
+const MIN_REP_DURATION_SECONDS = 700;
+
+const VALID_START_MIN = 20;
+const VALID_START_MAX = 40;
+const VALID_END_MIN = 100;
+const VALID_END_MAX = 140;
+const SVG_ICONS = {
+  success: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="#4CAF50"/>
+  </svg>`,
+  warning: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M1 21H23L12 2L1 21ZM13 18H11V16H13V18ZM13 14H11V10H13V14Z" fill="#FFC107"/>
+  </svg>`,
+  error: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.47 2 2 6.47 2 12C2 17.53 6.47 22 12 22C17.53 22 22 17.53 22 12C22 6.47 17.53 2 12 2ZM17 15.59L15.59 17L12 13.41L8.41 17L7 15.59L10.59 12L7 8.41L8.41 7L12 10.59L15.59 7L17 8.41L13.41 12L17 15.59Z" fill="#F44336"/>
+  </svg>`,
+  info: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V11H13V17ZM13 9H11V7H13V9Z" fill="#2196F3"/>
+  </svg>`,
+};
+
+// Exercise tracking variables
+let successAnimations = [];
+let consecutiveFormMistakes = 0;
 let lastMistakeTime = 0;
-const MISTAKE_RESET_TIME = 3000; // Reset consecutive mistakes after 3 seconds
-
-// DOM elements
-const repProgressBar = document.getElementById("rep-progress");
-const setProgressBar = document.getElementById("set-progress");
-
-let targetReps = 10;
-let targetSets = 3;
-
-// Add these variables near the top with other state variables
 let isRepInProgress = false;
 let hasFormMistakeInCurrentRep = false;
 let startingAngle = 0;
-let maxAngleInRep = 0; // Maximum angle reached during the current rep
-let didReachEndAngle = false; // Flag to track if the end angle was reached
+let maxAngleInRep = 0;
+let didReachEndAngle = false;
 let repStartTime = 0;
-const MIN_REP_DURATION = 1000; // Minimum 1 second for each rep
-const TOO_FAST_MESSAGE = "Too fast! Take at least 1 second for each rep";
-
-// Update these constants near the top of the file
-const START_ANGLE_MIN = 20; // More lenient starting angle
-const START_ANGLE_MAX = 75; // More lenient starting angle
-const END_ANGLE_MIN = 120; // More lenient ending angle
-const END_ANGLE_MAX = 160;
-const ANGLE_THRESHOLD = 5; // More sensitive angle change detection
-const ALIGNMENT_THRESHOLD = 45; // More lenient alignment threshold
-
-const SIDE_VIEW_SHOULDER_THRESHOLD = 0.15; // Threshold for detecting side view based on shoulder width
-const FRONT_VIEW_MESSAGE =
-  "Please turn to your side for better bicep curl tracking";
 let isInSideView = false;
+let redOverlayStartTime = 0;
+let currentErrorMessage = "";
+let errorMessageStartTime = 0;
+let isShowingSuccessAnimation = false;
+let currentSide = "right";
 
-// Add these messages as constants at the top
+// Exercise default configuration change to 12 reps and 3 sets for public release
+let targetReps = 100;
+let targetSets = 100;
+
+let errorStats = {
+  incompleteRange: 0,
+  tooFastReps: 0,
+  misalignedArm: 0,
+  wrongStartAngle: 0,
+  wrongEndAngle: 0,
+};
+
+let mostCommonError = "none";
+// UI elements
+const repProgressBar = document.getElementById("rep-progress");
+const setProgressBar = document.getElementById("set-progress");
+const feedbackContainer = document.getElementById("feedbackContainer");
+const currentSetNumber = document.getElementById("currentSetNumber");
+const formFeedback = document.getElementById("formFeedback");
+const nextSetButton = document.getElementById("nextSetButton");
+
+// Feedback messages
+const TOO_FAST_MESSAGE = "You are going too fast, exercise a bit slower!";
+const SIDE_VIEW_MESSAGE = "Please turn to your side for better tracking";
 const RANGE_INSTRUCTION = `Required motion: Start (${START_ANGLE_MIN}°-${START_ANGLE_MAX}°) &#8594; End (${END_ANGLE_MIN}°-${END_ANGLE_MAX}°)`;
 const INCOMPLETE_REP_MESSAGE = "Incomplete rep! Complete full range of motion";
 
-// Add these constants at the top
-const RED_OVERLAY_DURATION = 500; // 0.5 seconds for red overlay
-let redOverlayStartTime = 0;
-const ERROR_MESSAGE_DURATION = 3000; // 3 seconds for error messages
-let currentErrorMessage = "";
-let errorMessageStartTime = 0;
+function handleMessage(event) {
+  console.log("Received message:", event.data);
 
-function checkViewPosition() {
-  if (!poses || !poses.poseLandmarks) return false;
-
-  const leftShoulder = poses.poseLandmarks[11];
-  const rightShoulder = poses.poseLandmarks[12];
-
-  // Calculate shoulder width in normalized coordinates
-  const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
-
-  // Update side view status
-  isInSideView = shoulderWidth < SIDE_VIEW_SHOULDER_THRESHOLD;
-
-  return isInSideView;
-}
-
-document.addEventListener("exerciseConfig", function (event) {
-  console.log("Received exercise config:", event.detail);
-  targetReps = event.detail.reps;
-  targetSets = event.detail.sets;
-
-  // Update UI elements
-  updateSetProgress(((currentSet - 1) / targetSets) * 100);
-  updateRepProgress(((counter % targetReps) / targetReps) * 100);
-});
-
-window.addEventListener("message", function (event) {
-  console.log("Received postMessage:", event.data);
   try {
     const data =
       typeof event.data === "string" ? JSON.parse(event.data) : event.data;
 
     if (data.type === "exerciseConfig") {
-      targetReps = data.reps;
-      targetSets = data.sets;
+      targetReps = data.reps || targetReps;
+      targetSets = data.sets || targetSets;
+      console.log(`Updated config: ${targetReps} reps, ${targetSets} sets`);
+    } else if (data.type === "requestCurrentStats") {
+      const currentStats = {
+        type: "earlyCompletion",
+        stats: {
+          totalReps: counter,
+          perfectReps: perfectReps,
+          formMistakes: formMistakes,
+          completedSets: currentSet,
+          currentSetReps: repsInCurrentSet,
+        },
+      };
 
-      // Update UI elements
-      updateSetProgress(((currentSet - 1) / targetSets) * 100);
-      updateRepProgress(((counter % targetReps) / targetReps) * 100);
-
-      console.log(
-        `Exercise configured for ${targetSets} sets of ${targetReps} reps`
-      );
+      // Send stats back to React Native
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify(currentStats));
+      } else {
+        window.postMessage(currentStats, "*");
+      }
     }
   } catch (error) {
-    console.error("Error processing message:", error);
-  }
-});
-
-// Debug log when the script loads
-console.log("Exercise tracking script initialized");
-
-// Add message listener for both postMessage and ReactNative
-function handleMessage(event) {
-  console.log("Received message:", event.data);
-
-  let data;
-  try {
-    // Handle both string and object messages
-    data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-    console.log("Parsed message data:", data);
-
-    if (data.type === "exerciseConfig") {
-      targetReps = data.reps;
-      targetSets = data.sets;
-      console.log(
-        `Exercise configured for ${targetSets} sets of ${targetReps} reps`
-      );
-
-      // Update UI elements
-      updateSetProgress(((currentSet - 1) / targetSets) * 100);
-      updateRepProgress(((counter % targetReps) / targetReps) * 100);
-    }
-  } catch (error) {
-    console.error("Error processing message:", error);
+    console.error("Error handling message:", error);
   }
 }
+
+window.addEventListener("message", handleMessage);
+
+// Function to get current stats and end exercise early
+function finishExerciseEarly() {
+  const formAccuracy =
+    counter > 0 ? Math.round((perfectReps / counter) * 100) : 0;
+  const totalErrors = Object.values(errorStats).reduce((a, b) => a + b, 0);
+  const mostCommonErrorType = Object.entries(errorStats).reduce((a, b) =>
+    a[1] > b[1] ? a : b
+  )[0];
+
+  const errorMessages = {
+    incompleteRange: "Incomplete range of motion",
+    tooFastReps: "Exercises performed too quickly",
+    misalignedArm: "Arm not properly aligned",
+    wrongStartAngle: "Incorrect starting position",
+    wrongEndAngle: "Incorrect ending position",
+  };
+
+  const stats = {
+    type: "exerciseComplete",
+    stats: {
+      totalReps: counter,
+      perfectReps: perfectReps,
+      wrongReps: counter - perfectReps,
+      formAccuracy: formAccuracy,
+      totalErrors: totalErrors,
+      formMistakes: {
+        incompleteRange: errorStats.incompleteRange,
+        tooFastReps: errorStats.tooFastReps,
+        misalignedArm: errorStats.misalignedArm,
+        wrongStartAngle: errorStats.wrongStartAngle,
+        wrongEndAngle: errorStats.wrongEndAngle,
+      },
+      completedSets: currentSet,
+      mostCommonError: mostCommonErrorType,
+      mostCommonErrorMessage:
+        errorMessages[mostCommonErrorType] || "No major errors",
+    },
+  };
+
+  console.log("Sending exercise stats:", stats);
+
+  // Send to React Native
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify(stats));
+  } else {
+    window.postMessage(stats, "*");
+  }
+}
+
+// Make the function globally accessible
+window.finishExerciseEarly = finishExerciseEarly;
 
 // Setup MediaPipe Pose with enhanced settings
 const pose = new Pose({
@@ -155,7 +200,6 @@ pose.setOptions({
   enableFaceGeometry: false,
 });
 
-// Improved state tracking for both arms
 let leftArmStage = "down";
 let rightArmStage = "down";
 let lastLeftAngle = 0;
@@ -169,25 +213,34 @@ class SuccessAnimation {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+    this.initialY = y;
     this.opacity = 255;
-    this.velocity = -2; // Slower upward movement
-    this.size = 128;
     this.startTime = Date.now();
-    this.duration = 1000; // Animation duration in milliseconds
+    this.duration = 2000;
+    this.size = 256;
   }
 
   update() {
     const elapsed = Date.now() - this.startTime;
     const progress = elapsed / this.duration;
-    this.y += this.velocity;
+
+    const totalDistance = this.initialY;
+    this.y = this.initialY - totalDistance * progress;
+
     this.opacity = 255 * (1 - progress);
+
     return elapsed < this.duration;
   }
 
   draw() {
     push();
-    textSize(this.size);
     textAlign(CENTER, CENTER);
+    textSize(this.size);
+    strokeWeight(4);
+    stroke(0, this.opacity * 0.6);
+    fill(0, 255, 0, this.opacity);
+    text("+", this.x, this.y);
+    noStroke();
     fill(0, 255, 0, this.opacity);
     text("+", this.x, this.y);
     pop();
@@ -222,10 +275,6 @@ function setup() {
 function draw() {
   background(0);
 
-  push();
-  translate(width, 0);
-  scale(-1, 1);
-
   const videoAspectRatio = capture.width / capture.height;
   const canvasAspectRatio = width / height;
 
@@ -239,6 +288,26 @@ function draw() {
     scaledHeight = width / videoAspectRatio;
   }
 
+  push();
+  translate(width, 0);
+  scale(-1, 1);
+
+  if (!isTrackingEnabled) {
+    image(
+      capture,
+      (width - scaledWidth) / 2,
+      (height - scaledHeight) / 2,
+      scaledWidth,
+      scaledHeight
+    );
+    pop();
+
+    fill(0, 0, 0, 150);
+    noStroke();
+    rect(0, 0, width, height);
+    return;
+  }
+
   image(
     capture,
     (width - scaledWidth) / 2,
@@ -248,48 +317,57 @@ function draw() {
   );
   pop();
 
-  if (poses && poses.poseLandmarks) {
+  if (poses && poses.poseLandmarks && isTrackingEnabled) {
     drawSkeleton();
-
-    // Check view position and handle accordingly
     if (checkViewPosition()) {
       checkBicepCurl();
     } else {
       // Display message to turn to side
       push();
       fill(255);
-      textSize(32);
+      textSize(16);
       textAlign(CENTER, CENTER);
-      text(FRONT_VIEW_MESSAGE, width / 2, height / 2);
+      text(SIDE_VIEW_MESSAGE, width / 2, height / 2);
       pop();
     }
   }
 
-  // Draw error messages
   drawErrorMessages();
+  drawFeedbackOverlays();
 
   // Update and draw success animations
-  successAnimations = successAnimations.filter((animation) => {
-    const isAlive = animation.update();
-    if (isAlive) {
-      animation.draw();
+  for (let i = successAnimations.length - 1; i >= 0; i--) {
+    const animation = successAnimations[i];
+    animation.update();
+    animation.draw();
+    if (animation.opacity <= 0) {
+      successAnimations.splice(i, 1);
     }
-    return isAlive;
-  });
-
-  drawFeedbackOverlays();
+  }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
+function checkViewPosition() {
+  if (!poses || !poses.poseLandmarks) return false;
+
+  const leftShoulder = poses.poseLandmarks[11];
+  const rightShoulder = poses.poseLandmarks[12];
+  const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
+
+  currentSide = leftShoulder.z < rightShoulder.z ? "left" : "right";
+  isInSideView = shoulderWidth < SIDE_VIEW_SHOULDER_THRESHOLD;
+
+  return isInSideView;
+}
+
 function checkBicepCurl() {
-  // Get the visible arm landmarks (should be the closer arm in side view)
-  const shoulderIndex = isInSideView ? 12 : 11; // Use right shoulder if in side view
-  const elbowIndex = isInSideView ? 14 : 13;
-  const wristIndex = isInSideView ? 16 : 15;
-  const hipIndex = isInSideView ? 24 : 23;
+  const shoulderIndex = currentSide === "left" ? 11 : 12;
+  const elbowIndex = currentSide === "left" ? 13 : 14;
+  const wristIndex = currentSide === "left" ? 15 : 16;
+  const hipIndex = currentSide === "left" ? 23 : 24;
 
   const shoulder = poses.poseLandmarks[shoulderIndex];
   const elbow = poses.poseLandmarks[elbowIndex];
@@ -298,46 +376,41 @@ function checkBicepCurl() {
 
   const curlAngle = calculateAngle(shoulder, elbow, wrist);
 
-  // Update angle history for smoothing
-  const angleHistory = isInSideView ? rightAngleHistory : leftAngleHistory;
-  if (isInSideView) {
-    rightAngleHistory = [...rightAngleHistory.slice(1), curlAngle];
-  } else {
+  const angleHistory =
+    currentSide === "left" ? leftAngleHistory : rightAngleHistory;
+  if (currentSide === "left") {
     leftAngleHistory = [...leftAngleHistory.slice(1), curlAngle];
+  } else {
+    rightAngleHistory = [...rightAngleHistory.slice(1), curlAngle];
   }
 
-  const smoothedAngle = angleHistory.reduce((a, b) => a + b) / REP_HISTORY_SIZE;
-
+  const smoothedAngle =
+    angleHistory.reduce((a, b) => a + b) / angleHistory.length;
   const armAlignment = calculateArmAlignment(shoulder, elbow, hip);
 
-  // Check arm movement only for the visible arm in side view
   checkArmMovement(
     smoothedAngle,
     armAlignment,
-    isInSideView ? "right" : "left",
-    isInSideView ? rightArmStage : leftArmStage,
-    (newStage) => {
-      if (isInSideView) {
-        rightArmStage = newStage;
+    currentSide,
+    currentSide === "left" ? leftArmStage : rightArmStage,
+    (stage) => {
+      if (currentSide === "left") {
+        leftArmStage = stage;
       } else {
-        leftArmStage = newStage;
+        rightArmStage = stage;
       }
     }
   );
 }
 
 function checkArmMovement(angle, alignment, side, currentStage, setStage) {
-  // Display current angle and range requirements
-  if (side === "right" && isInSideView) {
+  // Display angle in the middle of the screen
+  if (side === "left") {
     push();
     fill(255);
-    textSize(32);
-    textAlign(CENTER, CENTER);
-    text(`Angle: ${angle.toFixed(1)}°`, width / 2, height / 2 - 40);
-
-    // Show range requirements
     textSize(24);
-    text(RANGE_INSTRUCTION, width / 2, height - 40);
+    textAlign(CENTER, CENTER);
+    text(`Angle: ${angle.toFixed(1)}°`, width / 2, height / 2);
     pop();
   }
 
@@ -345,154 +418,77 @@ function checkArmMovement(angle, alignment, side, currentStage, setStage) {
     angle - (side === "left" ? lastLeftAngle : lastRightAngle)
   );
 
-  // Only process movement if we're in side view and it's the right arm, or if we're in front view
-  if ((isInSideView && side === "right") || !isInSideView) {
-    if (angleChange > ANGLE_THRESHOLD) {
-      // Start of rep - check if arm is within valid starting range
-      if (
-        !isRepInProgress &&
-        angle >= START_ANGLE_MIN &&
-        angle <= START_ANGLE_MAX
-      ) {
-        isRepInProgress = true;
-        startingAngle = angle;
-        hasFormMistakeInCurrentRep = false;
-        maxAngleInRep = angle; // Reset max angle for this rep
-        didReachEndAngle = false; // Reset end angle flag
-        repStartTime = Date.now(); // Start timing the rep
-        console.log(`${side} arm starting rep at angle: ${angle}`);
+  if (angleChange > ANGLE_THRESHOLD && isInSideView) {
+    if (
+      !isRepInProgress &&
+      angle >= VALID_START_MIN &&
+      angle <= VALID_START_MAX
+    ) {
+      isRepInProgress = true;
+      hasFormMistakeInCurrentRep = false;
+      maxAngleInRep = angle;
+      repStartTime = Date.now();
+      startingAngle = angle;
+      console.log("Starting rep at angle:", angle);
+    }
+
+    if (isRepInProgress) {
+      maxAngleInRep = Math.max(maxAngleInRep, angle);
+      const isArmMisaligned = Math.abs(alignment) > ALIGNMENT_THRESHOLD;
+      if (isArmMisaligned) {
+        hasFormMistakeInCurrentRep = true;
+        errorStats.misalignedArm++;
+        showErrorIcon("misaligned");
+        redOverlayStartTime = Date.now();
       }
 
-      // During rep - check form only while rep is in progress
-      if (isRepInProgress) {
-        // Track the maximum angle reached during this rep
-        if (angle > maxAngleInRep) {
-          maxAngleInRep = angle;
-          // Check if we've reached the target range
-          if (angle >= END_ANGLE_MIN && angle <= END_ANGLE_MAX) {
-            didReachEndAngle = true;
-          }
-        }
+      if (angle <= VALID_START_MAX && maxAngleInRep > VALID_START_MAX) {
+        const now = Date.now();
+        const repDuration = now - repStartTime;
 
-        const isArmMisaligned = Math.abs(alignment) > ALIGNMENT_THRESHOLD;
+        // Always count the rep
+        counter++;
+        repsInCurrentSet++;
+        console.log("Completed rep:", counter, "Max angle:", maxAngleInRep);
 
-        // Check if arm goes too far down (less than starting range)
-        if (angle < START_ANGLE_MIN) {
+        // Check for mistakes
+        if (repDuration < MIN_REP_DURATION) {
+          errorStats.tooFastReps++;
+          showErrorIcon("tooFast");
           hasFormMistakeInCurrentRep = true;
-          showDetailedFeedback("Keep your arm up!");
+          redOverlayStartTime = Date.now();
         }
 
-        // Check if arm is misaligned
-        if (isArmMisaligned) {
+        if (maxAngleInRep < VALID_END_MIN) {
+          errorStats.incompleteRange++;
+          showErrorIcon("incompleteRange");
           hasFormMistakeInCurrentRep = true;
-          showDetailedFeedback("Keep your arm closer to your body!");
+          redOverlayStartTime = Date.now();
         }
-
-        // Check if we're at the top of the movement (arm is going back down)
-        if (angle <= maxAngleInRep - ANGLE_THRESHOLD * 2) {
-          // Rep is finishing, evaluate it
-          const now = Date.now();
-          if (!lastRepTime || now - lastRepTime > 500) {
-            counter++;
-            lastRepTime = now;
-
-            // Calculate rep duration
-            const repDuration = now - repStartTime;
-            console.log(
-              `${side} arm completed rep ${counter} with max angle: ${maxAngleInRep}, duration: ${repDuration}ms`
-            );
-
-            // Check if the rep was too fast
-            if (repDuration < MIN_REP_DURATION) {
-              hasFormMistakeInCurrentRep = true;
-              // Display the "too fast" message prominently
-              push();
-              fill(255, 0, 0);
-              textSize(36);
-              textAlign(CENTER, CENTER);
-              text(TOO_FAST_MESSAGE, width / 2, height / 2);
-              pop();
-            }
-
-            // Check if the rep reached the required range
-            if (!didReachEndAngle || maxAngleInRep > END_ANGLE_MAX) {
-              hasFormMistakeInCurrentRep = true;
-              // Show detailed feedback about the range of motion
-              if (maxAngleInRep < END_ANGLE_MIN) {
-                showDetailedFeedback(
-                  `Lift your arm higher! Reached ${maxAngleInRep.toFixed(
-                    1
-                  )}° (need ${END_ANGLE_MIN}°-${END_ANGLE_MAX}°)`
-                );
-              } else if (maxAngleInRep > END_ANGLE_MAX) {
-                showDetailedFeedback(
-                  `Don't lift too high! Reached ${maxAngleInRep.toFixed(
-                    1
-                  )}° (keep under ${END_ANGLE_MAX}°)`
-                );
-              }
-            }
-
-            // Now evaluate the entire rep
-            if (hasFormMistakeInCurrentRep) {
-              formMistakes++;
-              redOverlayStartTime = Date.now(); // Start red overlay timer
-              if (repDuration < MIN_REP_DURATION) {
-                showDetailedFeedback(TOO_FAST_MESSAGE);
-              } else {
-                showDetailedFeedback(INCOMPLETE_REP_MESSAGE);
-              }
-            } else if (didReachEndAngle && repDuration >= MIN_REP_DURATION) {
-              perfectReps++;
-              // Always create success animation for perfect reps
-              successAnimations.push(
-                new SuccessAnimation(width / 2, height / 2)
-              );
-            }
-
-            // Reset rep tracking
-            isRepInProgress = false;
-            hasFormMistakeInCurrentRep = false;
-            maxAngleInRep = 0;
-            didReachEndAngle = false;
-            repStartTime = 0;
-            setStage("down");
-
-            updateRepProgress(((counter % targetReps) / targetReps) * 100);
-
-            if (counter % targetReps === 0) {
-              currentSet++;
-              console.log(`Set ${currentSet} completed`);
-              updateSetProgress(((currentSet - 1) / targetSets) * 100);
-
-              if (currentSet > targetSets) {
-                console.log("Exercise complete, sending stats");
-                const stats = {
-                  type: "exerciseComplete",
-                  stats: {
-                    totalReps: counter,
-                    completedSets: currentSet - 1,
-                    formMistakes: formMistakes,
-                    perfectReps: perfectReps,
-                    formAccuracy: ((perfectReps / counter) * 100).toFixed(1),
-                  },
-                };
-
-                console.log("Sending completion stats:", stats);
-
-                if (window.ReactNativeWebView) {
-                  window.ReactNativeWebView.postMessage(JSON.stringify(stats));
-                } else {
-                  window.postMessage(JSON.stringify(stats), "*");
-                }
-              }
-            }
+        if (!hasFormMistakeInCurrentRep) {
+          perfectReps++;
+          successAnimations.push(new SuccessAnimation(width / 2, height / 2));
+        }
+        updateRepProgress((repsInCurrentSet / targetReps) * 100);
+        if (repsInCurrentSet >= targetReps) {
+          showSetFeedback();
+          if (currentSet < targetSets) {
+            currentSet++;
           }
+          repsInCurrentSet = 0;
+          updateSetProgress(((currentSet - 1) / targetSets) * 100);
+          updateRepProgress(0);
         }
+
+        isRepInProgress = false;
+        hasFormMistakeInCurrentRep = false;
+        maxAngleInRep = 0;
+        lastRepTime = now;
       }
     }
   }
 
+  // Update last angle
   if (side === "left") {
     lastLeftAngle = angle;
   } else {
@@ -582,28 +578,45 @@ function drawSkeleton() {
   }
 
   if (isInSideView) {
-    // In side view, only show the visible arm and shoulder
     stroke(255, 122, 0, 200);
     strokeWeight(8);
 
-    // Only draw the visible arm (right side in side view)
-    connectPoints(12, 14, x, y, scaledWidth, scaledHeight); // Right upper arm
-    connectPoints(14, 16, x, y, scaledWidth, scaledHeight); // Right lower arm
-    connectPoints(12, 24, x, y, scaledWidth, scaledHeight); // Right shoulder to hip (for reference)
+    // Draw the visible arm based on currentSide
+    if (currentSide === "left") {
+      connectPoints(11, 13, x, y, scaledWidth, scaledHeight); // Left upper arm
+      connectPoints(13, 15, x, y, scaledWidth, scaledHeight); // Left lower arm
+      connectPoints(11, 23, x, y, scaledWidth, scaledHeight); // Left shoulder to hip
 
-    // Draw landmarks only for the visible arm
-    for (let i of [12, 14, 16, 24]) {
-      const landmark = poses.poseLandmarks[i];
-      const landmarkX = x + landmark.x * scaledWidth;
-      const landmarkY = y + landmark.y * scaledHeight;
+      // Draw landmarks for left side
+      for (let i of [11, 13, 15, 23]) {
+        const landmark = poses.poseLandmarks[i];
+        if (landmark && landmark.visibility > 0.5) {
+          const landmarkX = x + landmark.x * scaledWidth;
+          const landmarkY = y + landmark.y * scaledHeight;
 
-      fill(255, 122, 0);
-      noStroke();
-      circle(landmarkX, landmarkY, i === 24 ? 4 : 8); // Smaller point for hip
+          fill(255, 122, 0);
+          noStroke();
+          circle(landmarkX, landmarkY, i === 23 ? 4 : 8);
+        }
+      }
+    } else {
+      connectPoints(12, 14, x, y, scaledWidth, scaledHeight); // Right upper arm
+      connectPoints(14, 16, x, y, scaledWidth, scaledHeight); // Right lower arm
+      connectPoints(12, 24, x, y, scaledWidth, scaledHeight); // Right shoulder to hip
+      for (let i of [12, 14, 16, 24]) {
+        const landmark = poses.poseLandmarks[i];
+        if (landmark && landmark.visibility > 0.5) {
+          const landmarkX = x + landmark.x * scaledWidth;
+          const landmarkY = y + landmark.y * scaledHeight;
+
+          fill(255, 122, 0);
+          noStroke();
+          circle(landmarkX, landmarkY, i === 24 ? 4 : 8);
+        }
+      }
     }
   } else {
-    // In front view, show full skeleton with emphasis on arms
-    // Draw body connections with light orange color
+    // In front view, show full skeleton with
     stroke(255, 200, 150, 150);
     strokeWeight(4);
 
@@ -741,9 +754,27 @@ function updateSetProgress(percentage) {
   setProgressBar.style.width = `${percentage}%`;
 }
 
-function showDetailedFeedback(message) {
-  currentErrorMessage = message;
-  errorMessageStartTime = Date.now();
+function showDetailedFeedback(message, type = "info") {
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.position = "fixed";
+  feedbackDiv.style.bottom = "20px";
+  feedbackDiv.style.left = "50%";
+  feedbackDiv.style.transform = "translateX(-50%)";
+  feedbackDiv.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+  feedbackDiv.style.color = "white";
+  feedbackDiv.style.padding = "10px 20px";
+  feedbackDiv.style.borderRadius = "5px";
+  feedbackDiv.style.display = "flex";
+  feedbackDiv.style.alignItems = "center";
+  feedbackDiv.style.gap = "10px";
+  feedbackDiv.style.zIndex = "1000";
+
+  feedbackDiv.innerHTML = `${SVG_ICONS[type]} <span>${message}</span>`;
+  document.body.appendChild(feedbackDiv);
+
+  setTimeout(() => {
+    feedbackDiv.remove();
+  }, 3000);
 }
 
 function drawErrorMessages() {
@@ -751,15 +782,155 @@ function drawErrorMessages() {
     currentErrorMessage &&
     Date.now() - errorMessageStartTime < ERROR_MESSAGE_DURATION
   ) {
-    push();
-    fill(255, 0, 0);
-    textSize(36);
-    textAlign(CENTER, CENTER);
-    text(currentErrorMessage, width / 2, height / 2);
-    pop();
-  } else {
-    currentErrorMessage = "";
+    const errorDiv = document.createElement("div");
+    errorDiv.style.position = "fixed";
+    errorDiv.style.top = "50%";
+    errorDiv.style.left = "50%";
+    errorDiv.style.transform = "translate(-50%, -50%)";
+    errorDiv.style.backgroundColor = "rgba(244, 67, 54, 0.9)";
+    errorDiv.style.color = "white";
+    errorDiv.style.padding = "15px 25px";
+    errorDiv.style.borderRadius = "8px";
+    errorDiv.style.display = "flex";
+    errorDiv.style.alignItems = "center";
+    errorDiv.style.gap = "10px";
+    errorDiv.style.zIndex = "1000";
+
+    errorDiv.innerHTML = `${SVG_ICONS.error} <span>${currentErrorMessage}</span>`;
+    document.body.appendChild(errorDiv);
+
+    setTimeout(() => {
+      errorDiv.remove();
+    }, ERROR_MESSAGE_DURATION);
   }
 }
 
-alert("Test Identifer: 420");
+function showSetFeedback() {
+  isTrackingEnabled = false;
+  currentSetNumber.textContent = currentSet;
+
+  // Calculate performance metrics
+  const wrongReps = repsInCurrentSet - perfectReps;
+  let feedbackText = "";
+
+  if (wrongReps === 0) {
+    feedbackText = "Perfect form on all reps! Keep up the great work! 🌟";
+  } else {
+    feedbackText = `You had ${perfectReps} perfect reps and ${wrongReps} reps with form issues.<br>`;
+    if (formMistakes > 0) {
+      feedbackText +=
+        "Focus on: <br>• Keeping your elbow steady<br>• Full range of motion<br>• Controlled movements";
+    }
+  }
+
+  formFeedback.innerHTML = feedbackText;
+  feedbackContainer.style.display = "block";
+
+  // Send set completion stats to React Native
+  const stats = {
+    type: "setComplete",
+    stats: {
+      setNumber: currentSet,
+      repsInSet: repsInCurrentSet,
+      perfectReps: perfectReps,
+      wrongReps: wrongReps,
+      formMistakes: {
+        incompleteRange: errorStats.incompleteRange,
+        tooFastReps: errorStats.tooFastReps,
+        misalignedArm: errorStats.misalignedArm,
+        wrongStartAngle: errorStats.wrongStartAngle,
+        wrongEndAngle: errorStats.wrongEndAngle,
+      },
+      totalReps: counter,
+      completedSets: currentSet,
+    },
+  };
+
+  // Send to React Native
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify(stats));
+  } else {
+    window.postMessage(stats, "*");
+  }
+
+  // If this was the last set, send exercise completion stats
+  if (currentSet >= targetSets) {
+    const wrongReps = counter - perfectReps;
+    const errors = Object.entries(errorStats);
+    mostCommonError =
+      errors.length > 0
+        ? errors.reduce((a, b) => (a[1] > b[1] ? a : b))[0]
+        : "none";
+
+    const completionStats = {
+      // Changed from stats to completionStats to avoid confusion
+      type: "exerciseComplete",
+      stats: {
+        totalReps: counter,
+        perfectReps: perfectReps,
+        wrongReps: wrongReps,
+        formMistakes: {
+          incompleteRange: errorStats.incompleteRange,
+          tooFastReps: errorStats.tooFastReps,
+          misalignedArm: errorStats.misalignedArm,
+          wrongStartAngle: errorStats.wrongStartAngle,
+          wrongEndAngle: errorStats.wrongEndAngle,
+        },
+        completedSets: currentSet,
+        errorStats: errorStats,
+        mostCommonError: mostCommonError,
+      },
+    };
+
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(completionStats)); // Now matches the variable name
+    } else {
+      window.postMessage(completionStats, "*"); // Now matches the variable name
+    }
+  }
+}
+
+nextSetButton.addEventListener("click", () => {
+  feedbackContainer.style.display = "none";
+  isTrackingEnabled = true;
+  formMistakes = 0;
+  perfectReps = 0;
+  repsInCurrentSet = 0;
+  hasFormMistakeInCurrentRep = false;
+  isRepInProgress = false;
+  updateRepProgress(0);
+});
+
+// Update the showErrorIcon function to use SVG icons
+function showErrorIcon(errorType) {
+  const iconContainer = document.createElement("div");
+  iconContainer.style.position = "fixed";
+  iconContainer.style.top = "20px";
+  iconContainer.style.right = "20px";
+  iconContainer.style.zIndex = "1000";
+
+  let icon;
+  switch (errorType) {
+    case "success":
+      icon = SVG_ICONS.success;
+      break;
+    case "warning":
+      icon = SVG_ICONS.warning;
+      break;
+    case "error":
+      icon = SVG_ICONS.error;
+      break;
+    default:
+      icon = SVG_ICONS.info;
+  }
+
+  iconContainer.innerHTML = icon;
+  document.body.appendChild(iconContainer);
+
+  setTimeout(() => {
+    iconContainer.remove();
+  }, 2000);
+}
+
+alert("Test Identifer: 481");
+alert(targetReps + "Test");

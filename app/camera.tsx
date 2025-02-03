@@ -13,6 +13,7 @@ import * as React from "react";
 import { WebView } from "react-native-webview";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { COLORS, globalStyles } from "./styles/globalStyles";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -97,7 +98,7 @@ export default function CameraScreen() {
         <WebView
           ref={webViewRef}
           source={{
-            uri: "https://www.uxtreasure.de/test2/SmartGymBroWebAppPrototype/index.html",
+            uri: "https://www.uxtreasure.de/test1/SmartGymBroWebAppPrototype/index.html",
           }}
           // source={HTML}
           style={[styles.webview, isLoading && styles.hidden]}
@@ -122,7 +123,6 @@ export default function CameraScreen() {
       </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={globalStyles.primaryButton}
           onPress={() => {
             const jsCode = `
       if (window.ReactNativeWebView) {
@@ -142,7 +142,14 @@ export default function CameraScreen() {
             webViewRef.current?.injectJavaScript(jsCode);
           }}
         >
-          <Text style={globalStyles.buttonText}>Finish Exercise Early</Text>
+          <LinearGradient
+            colors={[COLORS.primary, COLORS.primaryDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[globalStyles.primaryButton, styles.buttonContainer]}
+          >
+            <Text style={globalStyles.buttonText}>Finish Exercise Early</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -183,7 +190,8 @@ const styles = StyleSheet.create({
     position: "fixed",
     bottom: 0,
     alignItems: "center",
-    marginTop: 15,
-    marginBottom: 20,
+    marginTop: 10,
+    marginBottom: 15,
+    borderRadius: 8,
   },
 });
